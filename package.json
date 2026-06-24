@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Locked-rate inference relay on Solana — OpenAI-compatible gateway with prepaid compute credits",
+  "description": "Locked-rate inference relay on Solana \u2014 OpenAI-compatible gateway with prepaid compute credits",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js"
   },
   "engines": {
-    "node": ">=20"
+    "engines": { "node": "22.x" },
   },
   "dependencies": {
     "@solana/spl-token": "^0.4.9",
@@ -21,6 +21,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "ws": "^8.18.0"
   }
 }
