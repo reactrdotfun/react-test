@@ -29,7 +29,10 @@ router.get('/nonce/:wallet', async (req, res) => {
     { wallet, nonce, created_at: new Date().toISOString() },
     { onConflict: 'wallet' }
   );
-  if (error) return res.status(500).json({ error: 'nonce_store_failed' });
+  if (error) {
+    console.error('[auth] nonce store failed:', error.message, error.details || '');
+    return res.status(500).json({ error: 'nonce_store_failed', detail: error.message });
+  }
 
   res.json({ wallet, nonce, message });
 });
