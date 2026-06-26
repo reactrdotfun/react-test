@@ -65,7 +65,10 @@ router.post('/intent', async (req, res) => {
     })
     .select('id')
     .single();
-  if (error) return res.status(500).json({ error: 'intent_create_failed', detail: error.message });
+  if (error) {
+    console.error('[relai] topup intent insert failed:', error.message);
+    return res.status(500).json({ error: 'intent_create_failed', detail: error.message });
+  }
 
   // Solana Pay URL — native SOL omits spl-token; USDC/$RELAI include their mint.
   let url = `solana:${config.treasuryWallet}?amount=${payAmount}`;
