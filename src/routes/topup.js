@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { db } from '../supabase.js';
 import { config } from '../config.js';
 import { optionalJwt } from '../middleware/auth.js';
-import { getModel } from '../lib/pricing.js';
+import { getModel, lockedRate, tenorExpiry, TENORS } from '../lib/pricing.js';
 import { chainReady } from '../lib/chain.js';
 import { isValidWallet } from '../lib/solana.js';
 import { settleIntent } from '../lib/settle.js';
@@ -28,16 +28,19 @@ router.post('/intent', async (req, res) => {
   const modelId = (req.body?.model_id || '').toString();
   const tokensM = Number(req.body?.tokens_m);
   const payWith = ASSETS.includes((req.body?.pay_with || 'usdc').toString()) ? req.body.pay_with.toString() : 'usdc';
+  const tenor = TENORS.some((t) => t.key === (req.body?.tenor || '').toString()) ? req.body.tenor.toString() : '1M';
   const model = getModel(modelId);
   if (!model) return res.status(400).json({ error: 'unknown_model' });
   if (!Number.isFinite(tokensM) || tokensM <= 0 || tokensM > 100000) {
     return res.status(400).json({ error: 'bad_amount' });
   }
 
-  // USD owed = tokens(M) × locked rate. Credit target is always this USD value (micros).
-  const usd = +(tokensM * model.rate).toFixed(6);
+  // USD owed = tokens(M) × locked rate at the chosen tenor (contango premium applied).
+  const rate = lockedRate(modelId, tenor);
+  const usd = +(tokensM * rate).toFixed(6);
   const micros = Math.round(usd * 1e6);
   const reference = crypto.randomBytes(16).toString('hex');
+  const expiry = tenorExpiry(tenor).toISOString();
 
   // resolve the asset to pay in + quote the amount at the live price
   const meta = payAssetMeta(payWith);
@@ -62,6 +65,8 @@ router.post('/intent', async (req, res) => {
       status: 'pending',
       pay_asset: payWith,
       pay_amount: payAmount,
+      tenor: tenor,
+      expiry: expiry,
     })
     .select('id')
     .single();

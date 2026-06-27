@@ -129,3 +129,8 @@ alter table price_snapshots enable row level security;
 
 alter table topup_intents add column if not exists pay_asset  text not null default 'usdc'; -- usdc | sol | relai
 alter table topup_intents add column if not exists pay_amount numeric; -- amount owed in the chosen asset (quoted at intent time)
+
+-- ===== 05_tenor.sql =====
+-- Relai migration 05 — lock tenors (for the rate curve). Run after 04.
+alter table topup_intents add column if not exists tenor  text not null default '1M'; -- 1M | 3M | 6M
+alter table topup_intents add column if not exists expiry timestamptz;

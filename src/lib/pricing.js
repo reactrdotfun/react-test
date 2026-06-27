@@ -18,6 +18,27 @@ export function getModel(id) {
   return MODELS[id] || null;
 }
 
+// Lock tenors. Base locked rate (above) is the 1M rate; longer tenors carry a
+// contango premium (future compute priced higher). Tweak `mult` to reshape the curve.
+export const TENORS = [
+  { key: '1M', days: 30,  mult: 1.00 },
+  { key: '3M', days: 91,  mult: 1.10 },
+  { key: '6M', days: 182, mult: 1.22 },
+];
+export const DEFAULT_TENOR = '1M';
+export function getTenor(key) { return TENORS.find((t) => t.key === key) || TENORS[0]; }
+
+// Locked rate ($/M tokens) for a model at a tenor.
+export function lockedRate(id, tenorKey) {
+  const m = MODELS[id]; if (!m) return null;
+  return +(m.rate * getTenor(tenorKey).mult).toFixed(4);
+}
+
+// Expiry timestamp for a tenor measured from now.
+export function tenorExpiry(tenorKey) {
+  return new Date(Date.now() + getTenor(tenorKey).days * 86400_000);
+}
+
 /**
  * Cost in micro-USD for a request.
  * cost_usd = totalTokens / 1e6 * rate  ->  micros = totalTokens * rate
